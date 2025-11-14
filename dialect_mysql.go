@@ -186,6 +186,11 @@ func (s mysql) HasTable(tableName string) bool {
 func (s mysql) HasIndex(tableName string, indexName string) bool {
 	currentDatabase, tableName := currentDatabaseAndTable(&s, tableName)
 	if rows, err := s.db.Query(fmt.Sprintf("SHOW INDEXES FROM `%s` FROM `%s` WHERE Key_name = ?", tableName, currentDatabase), indexName); err != nil {
+		// MySQL 1146: Table doesn't exist
+		if strings.Contains(err.Error(), "Error 1146") {
+			return false
+		}
+		// 其它错误按原逻辑继续抛
 		panic(err)
 	} else {
 		defer rows.Close()
